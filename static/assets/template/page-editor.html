@@ -1,0 +1,104 @@
+<template id="page-editor-template">
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">页面编辑器</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">拖拽组件到页面中，配置页面布局</p>
+        </div>
+        <div class="flex space-x-3">
+            <button class="save-page-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                保存页面
+            </button>
+            <button class="preview-page-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                预览
+            </button>
+        </div>
+    </div>
+    
+    <div class="flex h-96">
+        <!-- 组件库 -->
+        <div class="w-64 bg-gray-50 border-r border-gray-200 p-4">
+            <h4 class="text-sm font-medium text-gray-900 mb-4">组件库</h4>
+            <div class="space-y-2">
+                <div class="component-item bg-white p-3 rounded border cursor-move hover:shadow-md" data-component="table">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">数据表格</div>
+                            <div class="text-xs text-gray-500">显示数据列表</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-item bg-white p-3 rounded border cursor-move hover:shadow-md" data-component="chart">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">图表组件</div>
+                            <div class="text-xs text-gray-500">数据可视化</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-item bg-white p-3 rounded border cursor-move hover:shadow-md" data-component="form">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">表单组件</div>
+                            <div class="text-xs text-gray-500">数据输入</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-item bg-white p-3 rounded border cursor-move hover:shadow-md" data-component="card">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-yellow-100 rounded flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">卡片组件</div>
+                            <div class="text-xs text-gray-500">信息展示</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面画布 -->
+        <div class="flex-1 p-4">
+            <div class="page-canvas bg-white border-2 border-dashed border-gray-300 rounded-lg h-full p-4" id="page-canvas">
+                <div class="text-center text-gray-500 py-8">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2">拖拽组件到这里开始构建页面</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 属性面板 -->
+        <div class="w-80 bg-gray-50 border-l border-gray-200 p-4">
+            <h4 class="text-sm font-medium text-gray-900 mb-4">属性设置</h4>
+            <div id="property-panel" class="space-y-4">
+                <div class="text-center text-gray-500 py-8">
+                    <p>选择一个组件来编辑其属性</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+</template>

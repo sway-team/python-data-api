@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataApi 管理系统</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome-free.min.css">
+    <link rel="stylesheet" href="/assets/css/animate.min.css"/>
+    <style>
+      body { background: #f3f4f6; }
+      .active {
+        background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+        color: #fff !important;
+        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.08);
+      }
+      .active .active-show {
+        display: inline!important;
+      }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-[90vw] mx-auto m-4">
+        <!-- 顶部导航栏 -->
+        <topbar class="app_element" data-init-data="common:topbar" data-id="topbar"></topbar>
+        <div class="flex flex-col lg:flex-row gap-4">
+            <main class="flex-1 min-w-0">
+                <menubar class="app_element" data-init-data="top:menu" data-css="flex flex-row gap-2"></menubar>
+                <section class="mt-4 bg-white rounded-2xl shadow-xl p-8 animate__animated animate__fadeInUp animate__faster">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">程序管理</h2>
+                            <p class="text-gray-500 text-sm mt-1">查看和管理当前账户的所有程序</p>
+                        </div>
+                        <button id="btn-add-app" event="app-list:add-btn" class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
+                            新建程序
+                        </button>
+                    </div>
+                    <cube-net class="app_element" data-init-data="app:list" data-id="app-list"></cube-net>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="/assets/js/art-template-web-4.13.2.js"></script>
+    <script src="/assets/js/jquery.appmanager.js"></script>
+
+    <script>
+
+    $(document).ready(function () {
+        let pageName = location.pathname.split('/').pop()
+        let search = location.search
+        let dataSource = `/service/${pageName}${search}`
+
+        app = new AppManager(document.body, {
+            // host: 'https://www.nowkey.net/tetwi',
+            // netHost: 'https://www.nowkey.net/tetwi',
+
+            host: 'http://127.0.0.1:5070',
+            netHost: 'http://127.0.0.1:5070',
+            checkTokenUrl:'/app/login',
+            dataSource: dataSource,
+            path: {
+                tpl: '/assets/template/'
+            },
+            templateNames: ['data-form']
+        })
+
+        class UserCenter extends AppManager.Element {
+            init(){
+                const that = this
+                that.user = that.app.conf.attr?.topbar?.user || {}
+
+                that.bindDataForm = that.app.bindAction('data-form:bindDataForm', that)
+                that.submitForm = that.app.bindAction('data-form:submitForm', that)
+
+                that.bindDataForm({
+                    name: '程序'
+                })
+                that.bindEvent()
+                console.log('UserCenter init')
+            }
+
+            loadData(){
+                const that = this
+                that.app.instance.get('app-list').reload()
+            }
+            showEditModal(id){
+                const that = this
+                let item = {}
+                id && (item = that.conf.data.find(item => item.id == id))
+                that.dForm.setConf({
+                    info: item
+                })
+
+                that.dForm.showEditModal().then(function(res){
+                    if(res.action != 'confirm'){
+                        return false;
+                    }
+                    that.submitForm(res.formData)
+                })
+            }
+
+            bindEvent(){
+                const that = this
+                that.app.event('app-list:loadData', (e, res) => {
+                    var thead = res.thead
+                    that.conf.data = res.data
+                    that.dForm.setConf({
+                        thead: thead
+                    })
+                    if(that.user.meta){
+                        that.setCurrentApp(that.user.meta.currentToken)
+                    }
+                })
+                that.app.event(that.conf.id + ':add-btn', that.app.bindAction('data-form:add', that))
+                that.app.event(that.conf.id + ':edit-btn', that.app.bindAction('data-form:edit', that))
+                that.app.event(that.conf.id + ':delete-btn', that.app.bindAction('data-form:delete', that))
+
+                that.app.event(that.conf.id + ':view-token-btn', (e, ex, node) => {
+                    let id = node.data('id')
+                    let item = that.conf.data.find(item => item.id == id)
+                    AppManager.alert(item.token, {
+                        title: '查看Token',
+                        content: item.token,
+                        confirmText: '确定'
+                    })
+                })
+                that.app.event(that.conf.id + ':current-btn', (e, ex, node) => {
+                    let id = node.data('id')
+                    let token = that.conf.data.find(item => item.id == id).token
+                    if(token == that.conf.currentToken){
+                        return false
+                    }
+                    that.app.post('/user/current', {
+                        currentToken: token
+                    }).then(function(res){
+                        if(res.code != 0){
+                            return false
+                        }
+                        that.setCurrentApp(token)
+                        AppManager.alert('设置成功，即将刷新页面').then(function(){
+                            location.reload()
+                        })
+                    })
+                })
+            }
+
+            setCurrentApp(token){
+                const that = this
+                if(!token){
+                    return false
+                }
+                if(that.conf.currentToken){
+                    let id = that.conf.data.find(item => item.token == that.conf.currentToken).id
+                    let appNode = that.root.find('[event="app-list:current-btn"][data-id="' + id + '"]')
+                    appNode.text('设为当前程序')
+                    appNode.removeClass('active')
+                }
+                that.conf.currentToken = token
+                let id = that.conf.data.find(item => item.token == token).id
+                that.root.find('[event="app-list:current-btn"][data-id="' + id + '"]')
+                .text('当前程序')
+                .addClass('active')
+            }
+        }
+
+        
+        app.start().then(() => {
+            
+            uc = new UserCenter(app, $('body'),{
+                id: 'app-list',
+                addUrl: '/service/add',
+                updateUrl: '/service/update',
+                removeUrl: '/service/remove',
+                param: {
+                    dataset: 'workflow_app'
+                }
+            })
+        });
+
+        
+
+        
+    });
+    </script>
+</body>
+</html> 

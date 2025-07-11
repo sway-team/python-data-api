@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataApi 管理系统</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome-free.min.css">
+    <link rel="stylesheet" href="/assets/css/animate.min.css"/>
+    <style>
+      body { background: #f3f4f6; }
+      .active {
+        background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+        color: #fff !important;
+        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.08);
+      }
+      .active .active-show {
+        display: inline!important;
+      }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-[90vw] mx-auto m-4">
+        <!-- 顶部导航栏 -->
+        <topbar class="app_element" data-init-data="common:topbar" data-id="topbar"></topbar>
+        <div class="flex flex-col lg:flex-row gap-4">
+            <main class="flex-1 min-w-0">
+                <menubar class="app_element" data-init-data="top:menu" data-css="flex flex-row gap-2"></menubar>
+                <section class="mt-4 bg-white rounded-2xl shadow-xl p-8 animate__animated animate__fadeInUp"> 
+                    <data-table class="app_element" data-init-data="data:list" data-id="data-table"></data-table>
+                </section>
+            </main>
+        </div>
+    </div>    
+    <script src="/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="/assets/js/art-template-web-4.13.2.js"></script>
+    <script src="/assets/js/jquery.appmanager.js"></script>
+    <script src="/assets/js/jquery.json-editor.min.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            template.defaults.imports.formatdate = function(str) {
+                if (str && str.indexOf('00:00:00') != -1) {
+                    str = str.slice(0, -9);
+                }
+                return str;
+            };
+            template.defaults.imports.urltmpl = function(str, item) {
+                var render = template.compile(str);
+                var url = render(item);
+                return url;
+            };
+            template.defaults.imports.gethtml = function(html, data) {
+                console.log(html);
+                if(html.indexOf('tmpl') != -1){
+                    html = template(html, {data:data});
+                }
+                return html;
+            };
+            template.defaults.imports.stringify = function (item) {
+              return JSON.stringify(item);
+            };
+  
+        });
+      </script>
+    <script>
+
+    $(document).ready(function () {
+        let pageName = location.pathname.split('/').pop()
+        let search = location.search
+        let dataSource = `/service/${pageName}${search}`
+
+        app = new AppManager(document.body, {
+            host: 'http://127.0.0.1:5070',
+            netHost: 'http://127.0.0.1:5070',
+            checkTokenUrl:'/app/login',
+            dataSource: dataSource,
+            path: {
+                tpl: '/assets/template/'
+            },
+            data:{},
+            templateNames: ['data-form', 'data-search']
+        })
+
+        app.start().then(() => {
+
+        });
+    });
+    </script>
+</body>
+</html> 

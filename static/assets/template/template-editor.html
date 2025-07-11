@@ -1,0 +1,118 @@
+<template id="template-editor-template">
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">模版编辑器</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">配置数据显示模版，支持内联JS和CSS</p>
+        </div>
+        <div class="flex space-x-3">
+            <button class="save-template-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                保存模版
+            </button>
+            <button class="preview-template-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                预览
+            </button>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-6 p-6">
+        <!-- 左侧：模版配置 -->
+        <div class="space-y-6">
+            <!-- 基本信息 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">基本信息</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">模版名称</label>
+                        <input type="text" id="template-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入模版名称">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">数据接口</label>
+                        <select id="template-api" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">选择数据接口</option>
+                            <option value="users">用户列表接口</option>
+                            <option value="orders">订单列表接口</option>
+                            <option value="products">产品列表接口</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">模版类型</label>
+                        <select id="template-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="table">表格</option>
+                            <option value="card">卡片</option>
+                            <option value="list">列表</option>
+                            <option value="chart">图表</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- HTML模版 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">HTML模版</h4>
+                <textarea id="template-html" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="输入HTML模版代码..."></textarea>
+                <div class="mt-2 text-xs text-gray-500">
+                    支持ArtTemplate语法，使用 {{}} 进行数据绑定
+                </div>
+            </div>
+            
+            <!-- CSS样式 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">CSS样式</h4>
+                <textarea id="template-css" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="输入CSS样式代码..."></textarea>
+            </div>
+            
+            <!-- JavaScript逻辑 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">JavaScript逻辑</h4>
+                <textarea id="template-js" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="输入JavaScript代码..."></textarea>
+            </div>
+        </div>
+        
+        <!-- 右侧：预览区域 -->
+        <div class="space-y-6">
+            <!-- 数据预览 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">数据预览</h4>
+                <div class="bg-white p-3 rounded border">
+                    <pre id="data-preview" class="text-xs text-gray-600 overflow-auto max-h-32">{
+  "data": [
+    {"id": 1, "name": "张三", "email": "zhangsan@example.com"},
+    {"id": 2, "name": "李四", "email": "lisi@example.com"}
+  ]
+}</pre>
+                </div>
+            </div>
+            
+            <!-- 模版预览 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">模版预览</h4>
+                <div id="template-preview" class="bg-white p-4 rounded border min-h-64">
+                    <div class="text-center text-gray-500 py-8">
+                        <p>模版预览将在这里显示</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快速模版 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">快速模版</h4>
+                <div class="space-y-2">
+                    <button class="quick-template-btn w-full text-left p-2 bg-white rounded border hover:bg-gray-50" data-template="table">
+                        <div class="text-sm font-medium">表格模版</div>
+                        <div class="text-xs text-gray-500">基础数据表格</div>
+                    </button>
+                    <button class="quick-template-btn w-full text-left p-2 bg-white rounded border hover:bg-gray-50" data-template="card">
+                        <div class="text-sm font-medium">卡片模版</div>
+                        <div class="text-xs text-gray-500">信息卡片展示</div>
+                    </button>
+                    <button class="quick-template-btn w-full text-left p-2 bg-white rounded border hover:bg-gray-50" data-template="list">
+                        <div class="text-sm font-medium">列表模版</div>
+                        <div class="text-xs text-gray-500">简单列表展示</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+</template>

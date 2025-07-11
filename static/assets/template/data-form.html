@@ -1,0 +1,156 @@
+<template id="data-form-template">
+    <form id="{{id}}-form" class="space-y-4" onsubmit="return false;">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                {{each thead head}}
+                {{if head.type == "hidden"}}
+                <input type="hidden" name="{{head.code}}" value="{{info[head.code]}}">
+                {{else if head.type == "avatar"}}
+                <div class="flex items-center justify-center">
+                    <image style="padding:0;width:24px;" class="img-thumbnail" data-src="{{info[head.code]}}" />
+                </div>
+                {{else if head.type == "select"}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{head.cname}}</label>
+                    <select name="{{head.code}}" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="{{info[head.code]}}">
+                        {{each head.list list}}
+                        <option value="{{list.value}}">{{list.text}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                {{else if head.type == "datetime"}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{head.cname}}</label>
+                    <input type="text" name="{{head.code}}" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="{{info[head.code] | formatdate}}">
+                </div>
+                {{else if ["json", "html", "textarea"].indexOf(head.type) != -1}}
+                {{else}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{head.cname}}</label>
+                    <input type="text" name="{{head.code}}" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="{{info[head.code]}}">
+                </div>
+                {{/if}}
+                {{/each}}
+            </div>
+            <div>
+                {{each thead head}}
+                {{if ["json", "html", "textarea"].indexOf(head.type) != -1}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{head.cname}}</label>
+                    <textarea name="{{head.code}}" rows="{{thead.length}}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{info[head.code]}}</textarea>
+                </div>
+                {{/if}}
+                {{/each}}
+            </div>
+        </div>
+    </form>
+</template>
+
+<script>
+    (function(){
+            if(!window.AppManager){
+                console.error('AppManager未定义')
+                return false;
+            }
+            class DataForm extends AppManager.Element {
+
+                init(){
+                    const that = this
+                    that.conf = {...DataForm.defaults, ...that.conf}
+                }
+
+                showEditModal(conf){
+                    const that = this
+
+                    const title = (that.conf.info.id ? '编辑' : '添加') + that.conf.name
+                    that.conf.title = title
+                    that.conf = {...that.conf, ...conf}    
+                    var pro = that.app.modal(that.conf).then(function(res){
+                        let form = res.dialog.find('#'+that.conf.id+'-form')
+                        let formData = AppManager.getFormData(form, true, true)
+                        console.log('formData', formData)
+                        res.formData = formData
+                        return res
+                    })
+
+                    that.conf.info.id && AppManager.setFormData($('#'+that.conf.id+'-form'), that.conf.info, false)
+                    
+                    return pro
+                }
+            }
+
+            DataForm.defaults = {
+                templateId: 'data-form',
+                id: "data-form-modal",
+                title: '',
+                name: '',
+                confirmText: '提交',
+                widthCss: 'max-w-[80%]',
+                thead: {},
+                info: {}
+            }
+            DataForm.actions = {
+                submitForm: function(formData){
+                    const that = this
+                    console.log('submitForm', formData)
+
+                    const url = formData.id ? that.conf.updateUrl : that.conf.addUrl
+
+                    formData.dataset = that.conf.param.dataset
+
+                    that.app.post(url, formData).then(function(res){
+                        if(res.code != 0){
+                            AppManager.alert(res.msg)
+                            return false;
+                        }
+                        console.log('submitForm',res)
+                        that.loadData()
+                    })
+                },
+                bindDataForm: function(conf){
+                    const that = this
+                    const DataForm = AppManager.elementClass.get('data-form')
+
+                    that.dForm = new DataForm(that.app, $('body'), {                   
+                        templateId: 'data-form',
+                        id: that.conf.id + '-modal',
+                        ...conf
+                    })
+                },
+                add: function(e, ex, node){
+                    const that = this
+                    console.log('add')
+                    that.showEditModal(0)
+                },
+                edit: function(e, ex, node){
+                    const that = this
+                    console.log('edit')
+                    let id = node.data('id')
+                    that.showEditModal(id)
+                },
+                delete: function(e, ex, node){
+                    const that = this
+                    console.log('delete')
+                    AppManager.confirm('确定删除吗？').then(function(res){
+                        if(!res){
+                            return false;
+                        }
+                        console.log('delete', res)
+                        const url = that.conf.removeUrl
+                        const id = node.data('id')
+                        that.app.post(url, {id: id, dataset: that.conf.param.dataset}).then(function(res){
+                            console.log('delete',res)
+                            that.loadData()
+                        })
+                    })
+                }
+            }
+    
+            AppManager.registerElement('data-form', DataForm);
+            AppManager.registerAction('data-form:delete', DataForm.actions.delete);
+            AppManager.registerAction('data-form:add', DataForm.actions.add);
+            AppManager.registerAction('data-form:edit', DataForm.actions.edit);
+            AppManager.registerAction('data-form:bindDataForm', DataForm.actions.bindDataForm);
+            AppManager.registerAction('data-form:submitForm', DataForm.actions.submitForm);
+        })(); 
+    </script>

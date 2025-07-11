@@ -1,0 +1,10 @@
+.DS_Store
+sftp-config.json
+__pycache__
+.vscode
+env.py
+data/*
+static/node_modules/*
+logs/*
+*.pid
+package-lock.json

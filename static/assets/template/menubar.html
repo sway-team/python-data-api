@@ -1,0 +1,15 @@
+<template id="menubar-template">
+    <aside class="min-w-[180px]">
+        {{if !css}}
+        {{set css = 'flex flex-row lg:flex-col gap-2'}}
+        {{/if}}
+        <div class="{{css}} bg-white rounded-2xl shadow p-4">
+            {{each data}}
+            <a href="{{$value.href}}" class="block p-2 rounded-xl font-medium {{$value.active ? 'active' : 'text-gray-700 hover:bg-gray-100'}}">
+                {{if $value.icon}}<i class="fa {{$value.icon}} mr-2"></i>{{/if}}
+                <span class="hidden md:inline active-show">{{$value.name}}</span>
+            </a>
+            {{/each}}
+        </div>
+    </aside>
+</template>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - DataApi 管理系统</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/animate.min.css"/>
+    <style>
+      body { background: #f3f4f6; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="m-4">
+        <!-- 顶部导航栏 -->
+        <nav class="bg-white/80 border border-gray-200 rounded-3xl mb-8">
+            <div class="px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <span class="text-xl font-bold text-gray-900 tracking-tight">DataApi</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="index#home" class="text-gray-700 hover:text-indigo-600 font-medium">首页</a>
+                    <a href="index#features" class="text-gray-700 hover:text-indigo-600 font-medium">功能亮点</a>
+                    <a href="index#why" class="text-gray-700 hover:text-indigo-600 font-medium">核心价值</a>
+                    <a href="index#pricing" class="text-gray-700 hover:text-indigo-600 font-medium">定价方案</a>
+                    <a href="index#contact" class="text-gray-700 hover:text-indigo-600 font-medium">联系我们</a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="login" class="inline-block px-4 py-2 rounded-md bg-gray-900 text-white font-semibold hover:bg-indigo-600 transition">立即体验</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 登录/注册/忘记密码卡片 -->
+        <div id="login-panel"  class="flex justify-center items-center min-h-[60vh] animate__animated animate__fadeInUp animate__faster">
+            <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-2">登录到 DataApi</h2>
+                    <p class="text-center text-sm text-gray-600 mb-8">
+                        没有账号？
+                        <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500" id="show-register">注册新账户</a>
+                    </p>
+                    <form class="space-y-6" id="login-form">
+                        <div class="rounded-md shadow-sm -space-y-px">
+                            <div>
+                                <label for="login-mobile" class="sr-only">用户名或手机号码</label>
+                                <input id="login-mobile" name="mobile" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="用户名或手机号码">
+                            </div>
+                            <div>
+                                <label for="login-password" class="sr-only">密码</label>
+                                <input id="login-password" name="pwd" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="密码">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="remember-me" name="isremember" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                                    记住我
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 animate__animated animate__fadeInUp animate__delay-1s">
+                                登录
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="register-panel" class="flex justify-center items-center min-h-[60vh] hidden animate__animated">
+            <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-2">注册新账户</h2>
+                    <p class="text-center text-sm text-gray-600 mb-8">
+                        已有账号？
+                        <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500" id="show-login-from-register">直接登录</a>
+                    </p>
+                    <form class="space-y-6" id="register-form">
+                        <div class="rounded-md shadow-sm -space-y-px">
+                            <div>
+                                <label for="reg-name" class="sr-only">用户名</label>
+                                <input id="reg-name" name="name" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="用户名">
+                            </div>
+                            <div>
+                                <label for="reg-mobile" class="sr-only">手机号码</label>
+                                <input id="reg-mobile" name="mobile" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="手机号码">
+                            </div>
+                            <div class="flex">
+                                <div class="flex-1">
+                                    <label for="reg-verify-code" class="sr-only">验证码</label>
+                                    <input id="reg-verify-code" name="code" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="验证码">
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <button type="button" id="send-verify-code" class="h-full px-4 py-3 border border-l-0 bg-indigo-500 text-sm font-medium text-gray-100">
+                                        发送验证码
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="reg-password" class="sr-only">密码</label>
+                                <input id="reg-password" name="pwd" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="密码">
+                            </div>
+                            <div>
+                                <label for="reg-confirm-password" class="sr-only">确认密码</label>
+                                <input id="reg-confirm-password" name="cpwd" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="确认密码">
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="agree-terms" name="agree" type="checkbox" value="1" required class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="agree-terms" class="ml-2 block text-sm text-gray-900">
+                                我同意
+                                <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">服务条款</a>
+                                和
+                                <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">隐私政策</a>
+                            </label>
+                        </div>
+                        <div>
+                            <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 animate__animated animate__fadeInUp animate__delay-1s">
+                                注册
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="/assets/js/art-template-web-4.13.2.js"></script>
+    <script src="/assets/js/jquery.appmanager.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            app = new AppManager(document.body, {
+                // host: 'https://www.nowkey.net/tetwi',
+                // netHost: 'https://www.nowkey.net/tetwi',
+
+                host: 'http://127.0.0.1:5070',
+                netHost: 'http://127.0.0.1:5070',
+
+                path: {
+                    tpl: '/assets/template/'
+                },
+                templateNames: ['data-form']
+            })
+
+            class Login extends AppManager.Element {
+                init(){
+                    console.log('Login init')
+                    this.currentPanel = '#login-panel'  
+                    this.bindEvent()
+                }
+
+                showPanel(panel) {
+                    if(this.currentPanel == panel) {
+                        return
+                    }
+                    const panels = ['#login-panel', '#register-panel'];
+                    panels.forEach(function(sel) {
+                        if(!$(sel).hasClass('hidden')) {
+                            $(sel).removeClass('animate__fadeInUp').addClass('animate__fadeOutDown');
+                            setTimeout(function(){ $(sel).addClass('hidden'); }, 100);
+                        }
+                    });
+                    $(panel).removeClass('hidden').addClass('animate__fadeInUp').removeClass('animate__fadeOutDown');
+                    this.currentPanel = panel
+                }
+
+                sendVerifyCode() {
+                    const mobile = $('#reg-mobile').val();
+                    if (!mobile) {
+                        AppManager.alert('请先输入手机号码');
+                        return;
+                    }
+                    if (!/^1[3-9]\d{9}$/.test(mobile)) {
+                        AppManager.alert('请输入正确的手机号码');
+                        return;
+                    }
+                                        
+                    const $btn = $(this);
+                    $btn.prop('disabled', true);
+                    
+                    // 发送验证码请求
+                    that.app.post('/user/sendsms', { mobile: mobile }).then(function(res) {
+                        if (res.code === 0) {
+                            // 开始倒计时
+                            let countdown = 60;
+                            const timer = setInterval(function() {
+                                if (countdown > 0) {
+                                    $btn.text(`重新发送(${countdown}s)`);
+                                    countdown--;
+                                } else {
+                                    clearInterval(timer);
+                                    $btn.prop('disabled', false).text('发送验证码');
+                                }
+                            }, 1000);
+                        } else {
+                            AppManager.alert(res.msg);
+                            $btn.prop('disabled', false);
+                        }
+                    }).catch(function() {
+                        AppManager.alert('发送失败，请稍后重试');
+                        $btn.prop('disabled', false);
+                    });
+                }
+
+                bindEvent(){
+                    const that = this
+                    $('#show-register, #nav-register-btn').on('click', function(e){ e.preventDefault(); that.showPanel('#register-panel'); });
+                    $('#show-login-from-register').on('click', function(e){ e.preventDefault(); that.showPanel('#login-panel'); });
+
+                    // 发送验证码
+                    $('#send-verify-code').on('click', function(e){
+                        e.preventDefault();
+                        that.sendVerifyCode();
+                    });
+
+                    // 登录表单
+                    $('#login-form').on('submit', function(e) {
+                        e.preventDefault();
+                        var formData = AppManager.getFormData($('#login-form'), false, true)
+
+                        if (formData.mobile && formData.pwd) {
+                            that.app.post('/user/login', formData).then(function(res){
+                                if(res.code != 0){
+                                    AppManager.alert(res.msg);
+                                    return false
+                                }
+                                app.setUserToken(res.data.token)
+                                AppManager.alert('登录成功，欢迎回来').then(function(){
+                                    window.location.href = res.data.redirect;
+                                })
+                            })
+                        } else {
+                            AppManager.alert('请输入用户名和密码');
+                        }
+                    });
+                    // 注册表单
+                    $('#register-form').on('submit', function(e) {
+                        e.preventDefault();
+                        var formData = AppManager.getFormData($('#register-form'), false, true)
+
+                        if(formData.pwd !== formData.cpwd) {
+                            AppManager.alert('两次输入的密码不一致');
+                            return;
+                        }
+                        // 验证验证码
+                        if (!formData.code) {
+                            AppManager.alert('请输入验证码');
+                            return;
+                        }
+
+                        if(!formData.agree) {
+                            AppManager.alert('请同意服务条款和隐私政策');
+                            return;
+                        }
+                        
+                        that.app.post('/user/reg', formData).then(function(res){
+                            if(res.code != 0){
+                                AppManager.alert(res.msg);
+                                return false
+                            }
+                            AppManager.alert('注册成功').then(function(){   
+                                that.showPanel('#login-panel');
+                            })
+                        })
+                    });
+                }
+            }
+
+            app.start().then(() => {
+                new Login(app, $('body'),{})
+            })
+        })
+
+    </script>
+</body>
+</html> 

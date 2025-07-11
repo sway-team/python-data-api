@@ -1,0 +1,25 @@
+<template id="app-card-template">
+    <div id="{{id}}">
+        {{each data}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between bg-gray-50 rounded-xl p-6 shadow-sm mb-4">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center mb-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
+                    <span class="text-lg font-semibold text-gray-900">{{$value.name}}</span>
+                </div>
+                <div class="text-gray-500 text-sm mb-1">介绍：{{$value.desc || '—'}}</div>
+                <div class="text-gray-500 text-sm mb-1">使命：{{$value.mission || '—'}}</div>
+                <div class="text-gray-500 text-sm mb-1">愿景：{{$value.vision || '—'}}</div>
+                <div class="text-gray-500 text-sm mb-1">价值观：{{$value.corevalue || '—'}}</div>
+                <div class="text-gray-400 text-xs">创建时间：{{$value.createtime}}</div>
+            </div>
+            <div class="flex space-x-2 mt-4 md:mt-0 md:ml-6 vertical-align-top">
+                <button event="{{id}}:current-btn" class="px-4 py-1 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium" data-id="{{$value.id}}">设为当前程序</button>
+                <button event="{{id}}:view-token-btn" class="px-4 py-1 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium" data-id="{{$value.id}}">查看token</button>
+                <button event="{{id}}:edit-btn" class="px-4 py-1 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium" data-id="{{$value.id}}">编辑</button>
+                <button event="{{id}}:delete-btn" class="px-4 py-1 rounded-md bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 font-medium" data-id="{{$value.id}}">删除</button>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</template>

@@ -1,0 +1,175 @@
+<template id="cube-net-template">
+    <div class="{{css}}">
+        <div element="net-container"></div>
+        <div style="display: none;" element="load-more" class="text-center m-4">
+            <button class="load-more px-6 py-2 text-sm border rounded-full hover:text-[#FE4F70] transition-colors duration-200">
+                查看更多
+            </button>
+        </div>
+        <div style="display: none;" element="empty-tip" class="flex flex-col items-center justify-center py-12">
+            <i class="fas fa-inbox text-4xl mb-4"></i>
+            <p>暂无数据</p>
+        </div>
+        <div style="display: none;" element="error-tip" class="flex flex-col items-center justify-center py-12">
+            <i class="fas fa-circle-exclamation text-4xl mb-4 text-red-500"></i>
+            <p>数据请求错误</p>
+        </div>
+    </div>
+</template>
+
+<script>
+(function(){
+
+    class CubeNet {
+
+        element = new Map
+        constructor(app, root, conf) {
+            this.app = app;
+            this.root = root;
+            this.conf = conf;
+            this.data = [];
+            this.loading = false;
+            this.init();
+        }
+
+        init() {
+            this.scan()
+            this.loadData();
+            this.bindEvents();
+        }
+        scan(){
+            const that = this 
+            that.root.find('[element]').each(function(){
+                const node = $(this)
+                const elementId = node.attr('element')
+                that.element.set(elementId, node)
+                node.removeAttr('element')
+            })
+        }
+        reload(conf){
+            Object.assign(this.conf, conf);
+            var netContainer = this.element.get('net-container')
+            netContainer.empty()
+            this.loadData();
+        }
+
+        async loadData() {
+
+            const dataSource = this.conf.url;
+            var param = this.conf.param;
+            
+            
+            const emptyTip = this.element.get('empty-tip')
+            const errorTip = this.element.get('error-tip')
+
+
+            if(!dataSource){
+                console.error('未配置数据源');
+                errorTip.show().find('p').text('配置错误')
+                return
+            }
+
+            if(this.conf.uninit) {
+                this.conf.unInitTip && emptyTip.show().find('p').text(this.conf.unInitTip)
+                return;
+            }else{
+                this.conf.unInitTip && emptyTip.hide().find('p').text('暂无数据')
+            }
+
+            if (this.loading) return;
+            this.loading = true;
+
+            if(this.conf.mix){
+                this.app.mixObjAttr(this.conf);
+                param = this.conf.param;
+            }
+
+            try {
+                // 从配置中获取数据源
+                const response = await this.app.get(dataSource, param);
+                console.log('网络请求成功:', dataSource);
+                this.render(response);
+                this.app.setData(this.conf.initData, 'data', response.data)
+                this.app.trigger(this.conf.initData, response)
+            } catch (error) {
+                console.error('网络请求错误:', error);
+            } finally {
+                this.loading = false;
+            }
+        }
+
+        render(res) {
+            const that = this
+            const isShowTip = !that.conf.single;
+            const netContainer = that.element.get('net-container')
+            const loadMore = that.element.get('load-more')
+            const emptyTip = that.element.get('empty-tip')
+            const errorTip = that.element.get('error-tip')
+
+            if (res.code == 0) {
+                if(res.p){
+                    that.conf.param.p = Number(res.p)
+                }
+                if(res.total == 0){
+                    netContainer.hide() 
+                    loadMore.hide()
+                    isShowTip && emptyTip.show()
+                    that.app.trigger(that.conf.id + ':loadData', res)
+                    return
+                }else{
+                    netContainer.show()
+                    errorTip.hide()
+                    emptyTip.hide()
+                }
+                // 渲染数据
+                that.conf.data = res.data
+
+                if(res.p * res.size < res.total){
+                    isShowTip && loadMore.show()
+                }else{
+                    loadMore.hide()
+                }
+
+                if(!that.conf.itemElement){
+                    loadMore.hide()
+                    isShowTip && errorTip.show().find('p').text('配置错误')
+                    console.log('not itemElement', that.conf.id)
+                    return false
+                }
+
+                that.app.loadTemplate([that.conf.itemElement]).then(()=>{
+                    var html = that.app.template(that.conf.itemElement, that.conf);
+                    if(isShowTip && res.p > 1){
+                        netContainer.children().last().append($(html).children())
+                    }else{
+                        netContainer.append(html)
+                    }
+                    that.app.trigger(that.conf.id + ':loadData', res)
+                })             
+            } else {
+                isShowTip && errorTip.show().find('p').text(res.msg)
+                console.error('加载数据失败:', res.msg);
+            }
+        }
+
+        bindEvents() {
+            var loadMore = this.element.get('load-more')
+            loadMore.click(()=>{
+                this.conf.param.p = this.conf.param.p + 1
+                this.loadData()
+            })
+        }
+    }
+    
+    try{
+        if(AppManager.elementClass.get('cube-net')){
+            console.error('cube-net 组件已注册')
+            return false;
+        }
+        AppManager.registerElement('cube-net', CubeNet);
+    }catch(e){
+        console.error(e)
+        window.CubeNet = CubeNet;
+    }
+})()
+</script>

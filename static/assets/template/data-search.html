@@ -1,0 +1,64 @@
+<template id="data-search-template">
+    <form id="{{id}}-form" class="space-y-4" onsubmit="return false;">
+        <div element="search-form" class="flex flex-wrap flex-row gap-4">
+            {{each thead head}}
+            {{if head.type == "hidden"}}
+            {{else if head.type == "select"}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{head.cname}}</label>
+                <select name="{{head.code}}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="">
+                    {{each head.list list}}
+                    <option value="{{list.value}}">{{list.text}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            {{else}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{head.cname}}</label>
+                <input type="text" name="{{head.code}}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="">
+            </div>
+            {{/if}}
+            {{/each}}
+            <div>
+                <button event="{{id}}:reset-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium mr-2">
+                    重置
+                </button>
+                <button event="{{id}}:submit-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    搜索
+                </button>
+            </div>
+        </div>
+    </form>
+</template>
+
+<script>
+    (function(){
+            if(!window.AppManager){
+                console.error('AppManager未定义')
+                return false;
+            }
+            class DataSearch extends AppManager.Element {
+
+                init(){
+                    const that = this
+                    that.scan()
+                    that.bindEvent()
+                }
+
+                bindEvent(){
+                    const that = this
+                    that.app.event(that.conf.id + ':reset-btn', () =>{
+                        let form = that.element.get('search-form')
+                        AppManager.emptyFormData(form)
+                        that.app.trigger(that.conf.id + ':reset')
+                    })
+                    that.app.event(that.conf.id + ':submit-btn', () =>{
+                        let form = that.element.get('search-form')
+                        let formData = AppManager.getFormData(form, false, true)
+                        that.app.trigger(that.conf.id + ':submit', formData)
+                    })                
+                }
+            }
+            AppManager.registerElement('data-search', DataSearch);
+        })(); 
+    </script>

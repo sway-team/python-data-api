@@ -1,0 +1,380 @@
+<style>
+    .table{
+        display: table;
+    }
+    .thead{
+        display: table-header-group;
+        vertical-align: middle;
+    }
+    .tbody {
+        display: table-row-group;
+        vertical-align: middle;
+    }
+    .th{
+        display: table-cell;
+        font-weight: bold;
+        text-align: -internal-center;
+        vertical-align: bottom;
+        padding: 0.75rem;
+        border-right: 1px solid #dee2e6;
+        /* border-bottom: 2px solid #dee2e6; */
+    }
+    .table .td{
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid #dee2e6;
+    }
+    .table .tbody+.tbody {
+        border-top: 2px solid #dee2e6
+    }
+    
+    .tr{
+        display: table-row;
+    }
+    .td{
+        display: table-cell;
+        padding: 8px;
+        vertical-align: middle;
+    }
+    .w-1\/8{
+        width: 12.5%;
+    }
+</style>
+<template id="data-table-template">
+<div id="{{id}}">
+    {{if data.code == 0}}
+    <div class="bg-white overflow-hidden sm:rounded-md" id="{{data.boxid}}">
+        <div class="p-4 flex justify-between items-center border border-gray-200 rounded-md">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">{{data.dataset.cname}}</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">{{data.dataset.code}}</p>
+            </div>
+            <div>
+                <button event="{{id}}:search-show-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium mr-2">
+                    打开搜索
+                </button>
+                <button event="{{id}}:add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    添加数据
+                </button>
+            </div>
+        </div>
+
+        <div element="search" style="display: none;" class="border border-gray-200 rounded-md p-4 mt-2">
+            <data-search class="app_element" data-id="{{id}}-search" data-thead="{{data.thead}}"></data-search>
+        </div>
+
+        <div element="content" class="border border-gray-200 rounded-md p-4 mt-2">
+            {{if data.page}}
+            <data-table-page class="app_element" data-root-id="{{id}}" data-page="{{data.page}}" data-p="{{data.p}}" data-size="{{data.size}}" data-total="{{data.total}}"></data-table-page>
+            {{/if}}
+            {{if data.panel == 1}}
+            <div class="overflow-x-auto px-4">   
+                {{each data.tbody item}}
+                <div class="flex flex-col md:flex-row md:items-center justify-between bg-gray-50 rounded-xl p-6 shadow-sm mb-2 border border-gray-200 hover:bg-gray-100">
+                    <div class="flex-1 min-w-0">
+                        <div class="table w-full">
+                            {{each data.thead head}}
+                            <div class="tr">
+                                <div class="td w-1/8">
+                                    <div class="text-gray-500 text-sm mb-1">{{head.cname}}</div>
+                                </div>
+                                <div class="td">
+                                    <div class="text-gray-500 text-sm mb-1">{{item[head.code] || '—'}}</div>
+                                </div>
+                            </div>
+                            {{/each}}
+                            <div class="tr">
+                                <div class="td">
+                                    <div class="text-gray-500 text-sm mb-1">操作</div>
+                                </div>
+                                <div class="td">
+                                    <div class="flex space-x-2 mt-4 md:mt-0 md:ml-6">
+                                        <button class="px-4 py-1 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium" event="{{id}}:edit-btn" data-id="{{item.id}}">编辑</button>
+                                        <button class="px-4 py-1 rounded-md bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 font-medium" event="{{id}}:delete-btn" data-id="{{item.id}}">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                {{/each}}
+            </div>
+            {{else}}
+            <div class="overflow-x-auto border border-gray-200 rounded-md">
+                <div class="table min-w-full divide-y divide-gray-200">
+                    <div class="thead bg-gray-50">
+                        <div class="tr !border-0">
+                            <span class="th t-check" style="display: none;" width="5%">选择</span>
+                            {{each data.thead head}}
+                            {{if head.type != "hidden"}}
+                            <span class="th" width="{{head.width}}">
+                                {{head.cname}}
+                            </span>
+                            {{/if}}
+                            {{/each}}
+                            <span class="th relative">
+                                <span>操作</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="tbody bg-white divide-y divide-gray-200">
+                        {{each data.tbody item}}
+                        <data-table-tr class="app_element" data-root-id="{{id}}" data-item="{{item}}" data-thead="{{data.thead}}" data-boxid="{{data.boxid}}" data-noedit="{{data.noedit}}" data-nodetail="{{data.nodetail}}" data-rowbar="{{data.rowbar}}"></data-table-tr>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+            {{if !data.tbody || !data.tbody.length}}
+            <div class="flex justify-center items-center h-full py-10">
+                <div class="text-center text-gray-500">暂无数据</div>
+            </div>
+            {{/if}}
+            {{if data.page}}
+            <data-table-page class="app_element" data-root-id="{{id}}" data-page="{{data.page}}" data-p="{{data.p}}" data-size="{{data.size}}" data-total="{{data.total}}"></data-table-page>
+            {{/if}}
+        </div>
+    </div>
+    {{else}}
+    <div class="text-center text-gray-500">{{data.msg}}</div>
+    {{/if}}
+</div>
+</template>
+<template id="data-table-page-template">
+    <div class="bg-white py-3 flex items-center justify-between">
+        <div class="hidden sm:block">
+            <p class="text-sm text-gray-700">
+                显示第 <span class="font-medium">{{(p-1) * size + 1}}</span> 到 <span class="font-medium">{{p * size}}</span> 条，共 <span class="font-medium">{{total}}</span> 条结果
+            </p>
+        </div>
+        <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button event="{{rootId}}:page:click" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" data-p="{{p-1}}">
+                    上一页
+                </button>
+                {{each page}}
+                <button event="{{rootId}}:page:click" class="min-w-10 relative inline-flex items-center justify-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" data-p="{{$value}}">{{$value}}</button>
+                {{/each}}
+                <button event="{{rootId}}:page:click" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" data-p="{{p+1}}">
+                    下一页
+                </button>
+            </nav>
+        </div>
+    </div>
+</template>
+
+<template id="data-table-tr-template">
+    <div class="tr" data-id="{{item.id}}">
+        <div class="td t-check" style="display: none;"><input type="checkbox" class="checkbox" data-id="{{item.id}}" /></div>
+        {{each thead head}}
+            {{set text = item[head.code]}}
+            {{if head.type == "datetime"}}
+                <span class="td">{{text|formatdate}}</span>
+            {{else if head.type == "select"}}
+                <span class="td content-input">{{head.list[text] || text}}</span>
+            {{else if head.type == "avatar"}}
+                <span class="td content-input"><image style="padding:0;width:24px;" class="img-thumbnail" data-src="{{text}}" /></span>
+            {{else if ["json", "html", "textarea"].indexOf(head.type) != -1}}
+                <span class="td content-input {{head.type}}-view">{{text}}</span>
+            {{else if head.href}}
+                <span class="td"><a href="{{head.href | urltmpl item}}" target="_blank">{{text}}{{head._text}}</a></span>
+            {{else if head.type == "hidden"}}
+            {{else}}
+            <span class="td">
+                {{head.text_}}{{text}}{{head._text}}
+                {{if head.badge}}
+                <span class="badge badge-warning">{{item[head.badge]}}</span>
+                {{/if}}
+            </span>
+            {{/if}}
+        {{/each}}
+        <span class="td">
+            {{if item._detail}}
+            <a href="{{item._detail}}" target="_blank">详情</a>
+            &nbsp;
+            {{/if}}
+            {{if !noedit}}
+            <a href="javascript:;" event="{{rootId}}:edit-btn" data-id="{{item.id}}">修改</a>
+            &nbsp;
+            <a href="javascript:;" event="{{rootId}}:delete-btn" data-id="{{item.id}}">删除</a>
+            {{/if}}
+            {{if rowbar}}
+                {{if typeof(rowbar) == 'string'}}
+                {{@rowbar|gethtml}}
+                {{else}}
+                {{each rowbar btn}}
+                    {{if btn.type == 'btn'}}
+                    <a href="{{btn.href | urltmpl item}}" role="button" target="_blank">
+                        <span>{{btn.name}}</span>
+                    </a>
+                    {{else if btn.type == 'net'}}
+                    <a href="javascript:;" role="button" data-ajax="{{btn.ajax}}" data-id="{{item.id}}" event="{{rootId}}:btn:click" data-btn="{{btn.name}}">
+                        <span>{{btn.name}}</span>
+                    </a>
+                    {{else if btn.type == 'br'}}
+                    <br/>
+                    {{/if}}
+                {{/each}}
+            {{/if}}
+        </span>
+        {{/if}}
+    </div>
+</template>
+<script>
+(function(){
+        if(!window.AppManager){
+            console.error('AppManager未定义')
+            return false;
+        }
+        class DataTable extends AppManager.Element {
+
+            init() {
+                const that = this
+                that.bindDataForm = that.app.bindAction('data-form:bindDataForm', that)
+                that.submitForm = that.app.bindAction('data-form:submitForm', that)
+
+                that.scan();
+                that.loadData();
+                that.bindEvent();
+                that.bindDataForm({
+                    name: ''
+                });
+                console.log('DataTable init')
+            }
+
+            loadData(param){
+                const that = this
+
+                console.log(that.conf)
+
+                if(!that.conf.url){
+                    return false;
+                }
+
+                if(!param){
+                    param = that.conf.param
+                }else{
+                    param = {...that.conf.param, ...param}
+                }
+
+                that.app.get(that.conf.url, param).then(function(res){
+                    console.log('loadData',res)
+                    if(res.code == 0){
+                        if(res.size > res.total){
+                            res.size = res.total
+                        }
+                    }
+                    // res.panel = 1
+
+                    that.conf.data = res
+                    that.render()
+                    that.app.scan().then(() => {
+                        that.bindJsonView()
+                        that.checkPage()
+                        that.scan()
+                    })
+                })
+            }
+
+            checkPage(){
+                const that = this
+                const res = that.conf.data
+                that.root.find('button[event="'+that.conf.id+':page:click"]').each(function(){
+                    let node = $(this)
+                    let p = node.data('p')
+                    if(p == res.p){
+                        node.attr('disabled', 'disabled')
+                        node.addClass('active')
+                    }
+
+                    if(p == 0 || p > res.page.length){
+                        node.addClass('disabled opacity-50')
+                        //bg-gray-200 text-gray-500 这个是默认样式 需要换成禁用的样式
+                        node.attr('disabled', 'disabled')
+                    }
+                })
+            }
+
+            bindJsonView(){
+                console.log('bindJsonView')
+                $('.json-view').each(function(){
+                    var node = $(this);
+                    var text = node.text();
+                    if(text){
+                        try{
+                            var json = JSON.parse(text);
+                            var editor = new JsonEditor(node, json,{
+                                editable:false,
+                                defaultCollapsed:true
+                            });
+                            // console.log(json);
+                        }catch(e){
+                            console.log(e);                
+                        }
+                    }
+                });
+            }
+
+            render(){
+                const that = this
+                const template = that.app.template('data-table', that.conf)
+                // root 子节点替换为新的子节点
+                let node = $(template)
+                let root = that.element.get('content')
+                if(root){
+                    root.empty().append(node.find('[element="content"]').children())
+                }else{
+                    that.root.empty().append(node)
+                }
+            }
+
+
+            showEditModal(id){
+                const that = this
+                let item = {}
+
+                id && (item = that.conf.data.tbody.find(item => item.id == id))
+
+                that.dForm.setConf({
+                    thead: that.conf.data.thead,
+                    info: item
+                })
+
+                that.dForm.showEditModal().then(function(res){
+                    if(res.action != 'confirm'){
+                        return false;
+                    }
+
+                    that.submitForm(res.formData)
+                })
+            }
+
+            bindEvent(){
+                const that = this
+
+                that.app.event(that.conf.id + ':add-btn', that.app.bindAction('data-form:add', that))
+                that.app.event(that.conf.id + ':edit-btn', that.app.bindAction('data-form:edit', that))
+                that.app.event(that.conf.id + ':delete-btn', that.app.bindAction('data-form:delete', that))
+
+                that.app.event(that.conf.id + ':search-show-btn', (e, ex, node) =>{
+                    console.log('search-show' , that.element)
+                    that.element.get('search').toggle()
+                    if(that.element.get('search').is(':visible')){
+                        node.text('关闭搜索')
+                    }else{
+                        node.text('打开搜索')
+                    }
+                })
+                that.app.event(that.conf.id + '-search:reset', () =>{
+                    that.loadData()
+                })
+                that.app.event(that.conf.id + '-search:submit', (e, formData) =>{
+                    that.loadData(formData)
+                })
+            }
+        }
+
+        AppManager.registerElement('data-table', DataTable);
+    })(); 
+</script>

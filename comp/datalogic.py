@@ -254,9 +254,8 @@ class DataLogic:
         if 'type' in auth and auth['type'] != '1' and code not in self.whiteSet:
             setparam['createtoken'] = auth['token']
             inparam['createtoken'] = auth['token']
-        print(setparam)
+        
         setres = Data('dataset').get_one(setparam)
-        print(setres)
         
         if setres is None or 'datain' not in setres:
             return json_ret(1, 'dataset error')

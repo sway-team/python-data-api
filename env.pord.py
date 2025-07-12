@@ -16,6 +16,7 @@ DATABASE_URI='mysql+pymysql://{db_user}:{db_pwd}@{db_host}:{db_port}/{db_name}?c
 DATABASE_SCHEMA=DB_NAME
 DATABSE_PARAM_CHECK=True
 DATABSE_ECHO=False
+ADMIN_TOKEN='ece5e16ba73a1c1a1fa5da7f27a3e02a' # 管理员token，可自行生成md5串填入
 
 # 服务配置
 SERVICE_HOST='http://localhost:5070'

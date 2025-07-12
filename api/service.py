@@ -52,8 +52,7 @@ def go(path):
             else:
                 param['createtoken'] = user['token']
                 param['token'] = user['token']
-            
-        print('service',param)
+
         return Api().post_dataset(path, param)
     
     elif path in pageIndex.keys():

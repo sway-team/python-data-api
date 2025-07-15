@@ -45,7 +45,6 @@
     <script src="/assets/js/jquery-3.7.1.min.js"></script>
     <script src="/assets/js/art-template-web-4.13.2.js"></script>
     <script src="/assets/js/jquery.appmanager.js"></script>
-
     <script>
 
     $(document).ready(function () {
@@ -54,9 +53,6 @@
         let dataSource = `/service/${pageName}${search}`
 
         app = new AppManager(document.body, {
-            // host: 'https://www.nowkey.net/tetwi',
-            // netHost: 'https://www.nowkey.net/tetwi',
-
             host: 'http://127.0.0.1:5070',
             netHost: 'http://127.0.0.1:5070',
             checkTokenUrl:'/app/login',
@@ -66,7 +62,21 @@
             },
             templateNames: ['data-form']
         })
+    });
 
+    $(document).ready(function () {
+        app.start().then(() => {
+            
+            uc = new UserCenter(app, $('body'),{
+                id: 'app-list',
+                addUrl: '/service/add',
+                updateUrl: '/service/update',
+                removeUrl: '/service/remove',
+                param: {
+                    dataset: 'workflow_app'
+                }
+            })
+        });
         class UserCenter extends AppManager.Element {
             init(){
                 const that = this
@@ -165,24 +175,6 @@
                 .addClass('active')
             }
         }
-
-        
-        app.start().then(() => {
-            
-            uc = new UserCenter(app, $('body'),{
-                id: 'app-list',
-                addUrl: '/service/add',
-                updateUrl: '/service/update',
-                removeUrl: '/service/remove',
-                param: {
-                    dataset: 'workflow_app'
-                }
-            })
-        });
-
-        
-
-        
     });
     </script>
 </body>

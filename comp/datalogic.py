@@ -141,10 +141,10 @@ class DataLogic:
     def get_data_service(self, code, param, auth, config={}):
         ret = self.func_combo(code, param, auth, config, 'get_list', 'index')
 
-        if ret['code'] != 0:
+        if int(ret['code']) != 0:
             return ret
         
-        if ret['size'] > 0:
+        if int(ret['size']) > 0:
             page_count = math.ceil(int(ret['total'])/int(ret['size']))
         else:
             page_count = 1

@@ -21,6 +21,7 @@ ApiIndex = {
 }
 
 pageIndex = {   
+    'login':{'id':'login', 'href': '/app/login', 'name': '登录页', 'icon': 'fa-solid fa-user'},
     'usercenter':{'id':'usercenter', 'href': '/app/usercenter', 'name': '个人中心', 'icon': 'fa-solid fa-list'},
     'datamanage':{'id':'datamanage', 'href': '/app/datamanage?dataset=workflow_dataset', 'name': '数据管理', 'icon': 'fa-solid fa-file-code'},
     'templatemanage':{'id':'templatemanage', 'href': '/app/templatemanage', 'name': '模板管理', 'icon': 'fa-solid fa-file-code'},
@@ -152,6 +153,9 @@ class Api(BaseClass):
     def getPageData(self, request, path):
 
         param = self.get_param(request)
+
+        if path == 'login':
+            return ret(0)
 
         user = self.checkUserToken()
 

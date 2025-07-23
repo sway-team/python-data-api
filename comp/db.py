@@ -22,18 +22,31 @@ def parse_join(s):
 
     if s.find('join') < 0:
         s = 'join ' + s
-    p = re.compile(r'(.*?)join (.+) as (.+) on (.+) = (.+)')
+
+    have_alias = s.find('as') >= 0
+
+    if have_alias:
+        p = re.compile(r'(.*?)join (.+) as (.+) on (.+) = (.+)')
+    else:
+        p = re.compile(r'(.*?)join (.+) on (.+) = (.+)')
+
     m = p.match(s)
     if m:
+        alias = ''
+        rfield = ''
+        lfield = ''
         ret['method'] = m.group(1).strip()
         ret['table'] = m.group(2).replace('`','').strip()
-        
-        alias = m.group(3).strip()
-        rfield = m.group(4).replace('`','').strip()
-        lfield = m.group(5).replace('`','').strip()
 
-        if lfield.find(alias+'.') >= 0:
-            lfield,rfield = rfield,lfield
+        if have_alias:
+            alias = m.group(3).strip()
+            rfield = m.group(4).replace('`','').strip()
+            lfield = m.group(5).replace('`','').strip()
+            if lfield.find(alias+'.') >= 0:
+                lfield,rfield = rfield,lfield
+        else:
+            rfield = m.group(3).replace('`','').strip()
+            lfield = m.group(4).replace('`','').strip()
 
         if lfield.find('.') > 0:
             lfield = lfield.split('.')[1]
@@ -84,13 +97,17 @@ class Database:
 
         return result
     
-    def join_item(self, sql, table, join_item:dict={}):
-        
+    def join_item(self, sql, table, join_item:dict={}, table_keys:dict={}):
         if not join_item:
             return sql
 
         r_table = self.get_table(join_item['table'])
-        r_table = aliased(r_table, name=join_item['alias'])
+
+        if join_item['alias'] != '':
+            r_table = aliased(r_table, name=join_item['alias'])
+            table_keys[join_item['alias']] = r_table.c
+        else:
+            table_keys[r_table.name] = r_table.c
         # table = join(table, user, table.c.createtoken == user.c.token)
         # sql = sql.join(r_table, table.c.get(join_item['lfield']) == r_table.c.get(join_item['rfield']))
 
@@ -105,12 +122,20 @@ class Database:
         # elif join_item['method'] == 'full':
         # else:
 
-        return sql
+        return sql, table_keys
 
+    def join_handle(self, sql, table, joins, table_keys):
+        if isinstance(joins, str):
+            join_item = parse_join(joins)
+            sql, table_keys = self.join_item(sql, table, join_item, table_keys)
+        else:
+            for join in joins:
+                join_item = parse_join(join)
+                sql, table_keys = self.join_item(sql, table, join_item, table_keys)
 
+        return sql, table_keys
     
     def convert_by_config(self, table, where:dict, config: dict, type: str = ""):
-
         if type == 'count':
             field = func.count('*')
         elif 'field' in config and config['field'] != "":
@@ -118,27 +143,21 @@ class Database:
         else:
             field = text("*")
 
+        print('field:', table, where, field)
+        
+        table_keys = {}
 
         if 'alias' in config and config['alias'] != "":
             table = aliased(table, name=config['alias'])
-            # for key, val in list(where.items()):
-            #     if '.' not in key:
-            #         where[config['alias'] + '.' + key] = val
-            #         del where[key]
+            table_keys[config['alias']] = table.c
+
         sql = select(field).select_from(table)
     #    'join': 'left join `character` as c on c.id = f.userb',
-        # join需要实现
         if 'join' in config:
             joins = config['join']
-            if isinstance(joins, str):
-                join_item = parse_join(joins)
-                sql = self.join_item(sql, table, join_item)
-            else:
-                for join in joins:
-                    join_item = parse_join(join)
-                    sql = self.join_item(sql, table, join_item)
+            sql, table_keys = self.join_handle(sql, table, joins, table_keys)
         # where 实现
-        sql = self.convert_by_where(sql, table, where, config)
+        sql = self.convert_by_where(sql, table, where, config, table_keys)
 
         if 'group' in config:
             sql = sql.group_by(table.c.get(config['group']))
@@ -221,7 +240,7 @@ class Database:
             filter.append(o_field.op('regexp')(val))
         return filter
 
-    def convert_by_where(self, sql, table, where: dict, config: dict):
+    def convert_by_where(self, sql, table, where: dict, config: dict, table_keys:dict={}):
         s_field = []
         s_type = []
         filter = []
@@ -233,19 +252,36 @@ class Database:
                 
         for key in where:
             val = where[key]
+            alias = ""
+            if '.' in key:
+                key_list = key.split('.')   
+                alias = key_list[0]
+                key = key_list[1]
+            
+            o_field = None
 
-            if key in table.c: #and val != ""
+            if alias != "":
+                alias_table = table_keys[alias]
+                o_field = alias_table.get(key)
+            else:
                 o_field = table.c.get(key)
-                if key in s_field:
-                    index = s_field.index(key)
-                    c_type = s_type[index]
-                elif type(val) == list:
-                    c_type = val[0]
-                    val = val[1]
-                else:
-                    c_type = 'eq'
 
-                filter = self.fill(filter,o_field,c_type,val)
+
+            # print('key', key, alias, o_field)
+
+            if o_field is None:
+                continue
+
+            if key in s_field:
+                index = s_field.index(key)
+                c_type = s_type[index]
+            elif type(val) == list:
+                c_type = val[0]
+                val = val[1]
+            else:
+                c_type = 'eq'
+
+            filter = self.fill(filter,o_field,c_type,val)
     
         if len(filter):
             sql = sql.filter(and_(*filter))
@@ -278,6 +314,8 @@ class Database:
                     _ret[key] = param[ikey]
             elif val != "0" and val == "":
                 pass
+            elif where[ikey] == '$empty':
+                    _ret[key] = ""
             else:
                 _ret[key] = where[key]
         return _ret
@@ -304,7 +342,10 @@ class Database:
        
 
         if 'size' in param:
-            config['size'] = int(param['size'])
+            if param['size'] == "":
+                config['size'] = ""
+            else:
+                config['size'] = int(param['size'])
             del param['size']
 
         if 'p' in param and param['p'] != "":
@@ -330,7 +371,7 @@ class Database:
                 return json
 
             sql = self.convert_by_config(table, where, config, 'data')
-        # print('sql', sql)
+            # print('sql', sql)
             result = self.exec(sql).mappings().fetchall()
         except Exception as e:
             print(e)
@@ -390,7 +431,7 @@ class Database:
         table = self.get_table(self.dbname)
 
         sql = self.convert_by_config(table, where, config, 'count')
-
+        # print('sql', sql)
         result = self.exec(sql).first()
 
         return result[0]

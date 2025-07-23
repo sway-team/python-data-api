@@ -27,6 +27,8 @@ class Frame(BaseClass):
                 'code':param['filter'],
                 'createtoken':param['token']
             })
+            if not filterItem:
+                return config
             fconfig = json.loads(filterItem['meta'])
             if not fconfig:
                 return config

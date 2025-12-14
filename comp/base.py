@@ -3,11 +3,17 @@ from comp.tool import rand
 from comp.db import Database,Data
 import json
 from cachetools import TTLCache, cached
+import env
 
+_cache_ttl = 300
+if env.ENV == 'dev':
+    _cache_ttl = 30
+
+_cache = TTLCache(maxsize=1000, ttl=_cache_ttl)
 
 class BaseClass:
 
-    _cache = TTLCache(maxsize=1000, ttl=10)
+    _cache = _cache
 
     def checkUserToken(self):
         
@@ -18,25 +24,51 @@ class BaseClass:
             if not token:
                 return None
             
-            user = {}
-            config = {
-                'type':'data',
-                'field':'id,nick,avatar,token,type,meta'
-            }
-                
-            user = Data('user').get_one({'incode':token}, config)
+            if self._cache.get('checkUserToken:'+token):
+                return self._cache.get('checkUserToken:'+token)
+            
+            user = self.getUser(token)
 
-            if user:
-                if user.get('meta'):
-                    meta = json.loads(user['meta'])
-                    if meta.get('currentToken'):
-                        user['currentToken'] = meta['currentToken']
-                    user['meta'] = meta
-                else:
-                    user['meta'] = {}
-                return user
+            self._cache['checkUserToken:'+token] = user
+            return user
             
         return None
+
+    def flushUserToken(self):
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            
+            if not token:
+                return False
+            
+            user = self.getUser(token)
+
+            self._cache['checkUserToken:'+token] = user
+            return user
+
+        return False        
+    
+    def getUser(self, token):
+        user = {}
+        config = {
+            'type':'data',
+            'field':'id,nick,avatar,token,type,meta'
+        }
+            
+        user = Data('user').get_one({'incode':token}, config)
+
+        if user:
+            if user.get('meta'):
+                meta = json.loads(user['meta'])
+                if meta.get('currentToken'):
+                    user['currentToken'] = meta['currentToken']
+                user['meta'] = meta
+            else:
+                user['meta'] = {}
+        
+        return user
+
 
     def apiToJson(self, data):
         if isinstance(data, tuple):
@@ -114,6 +146,6 @@ class BaseClass:
         if 'meta' in param:
             param['meta'] = json.dumps(param['meta'])
 
-        print(param)
+        # print(param)
         info = Database("inlog", param_check=False).update(param, {'type':'add'})
         return info

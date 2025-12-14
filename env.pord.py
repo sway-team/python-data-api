@@ -1,7 +1,7 @@
 from urllib.parse import quote_plus
 
 FLASK_DEBUG=True
-FLASK_RUN_PORT=5070
+FLASK_RUN_PORT=5069
 FLASK_APP="app"
 ENV='prod'
 
@@ -19,8 +19,8 @@ DATABSE_ECHO=False
 ADMIN_TOKEN='ece5e16ba73a1c1a1fa5da7f27a3e02a' # 管理员token，可自行生成md5串填入
 
 # 服务配置
-SERVICE_HOST='http://localhost:5070'
-PAGE_HOST='http://localhost:5173'
+SERVICE_HOST='http://localhost:5069'
+PAGE_HOST='http://localhost:5174'
 APP_NAME='DataApi'
 SECRET_KEY='DataApiSecretKey'
 RUNTIME_PATH='./runtime'

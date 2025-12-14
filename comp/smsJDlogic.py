@@ -18,7 +18,7 @@ class SmsLogic:
     
     def post_dataset(self, path, param):
         token = self.token
-        param['token'] = token
+        param['_dtoken'] = token
         
         res = ret(1)
         dataset = param.get('dataset')

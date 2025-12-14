@@ -9,7 +9,7 @@ from comp.datalogic import DataLogic
 router = Blueprint('dataset_router', __name__)
 @router.route("/<path>", methods=["GET", "POST"], endpoint="go")
 def go(path):
-    if path in ['getlist','getinfo','add','update','remove','count']:
+    if path in ['getlist','getinfo','add','update','remove','count', 'func']:
         func = getattr(Dataset(), path)
         if func:
             return func(request)
@@ -23,14 +23,14 @@ class Dataset(BaseClass):
         config = {}
 
         if 'filter' in param and param['filter'] != '':
-            _cacheKey = 'param_filter:'+param['dataset']+param['filter']+param['token']
+            _cacheKey = 'param_filter:'+param['dataset']+param['filter']+param['_dtoken']
             if self._cache.get(_cacheKey):
                 config = self._cache.get(_cacheKey)
             else:
                 filterItem = Data('datafilter').get_one({
                     'datasetcode':param['dataset'],
                     'code':param['filter'],
-                    'createtoken':param['token']
+                    'createtoken':param['_dtoken']
                 })
 
                 if not filterItem:
@@ -48,7 +48,7 @@ class Dataset(BaseClass):
             dconfig = json.loads(param['_dconfig'])
             config = dict(config, **dconfig)
         
-        unset(param, '_dconfig,filter,dataset,token')
+        unset(param, '_dconfig,filter,dataset,_dtoken')
 
         return config
 
@@ -67,6 +67,17 @@ class Dataset(BaseClass):
     #     "comboKey": "count",
     #     "dataType": "list"
     #   },
+
+    def _combo_proc_list(self, combo, comboData):
+        listObj = {}
+        for item in comboData:
+            relateValue = item[combo['relateKey']]
+            if relateValue not in listObj:
+                listObj[relateValue] = []
+            listObj[relateValue].append(item)
+
+        return listObj
+
     def combo_builder(self, param, resData, comboList, user):
         daLogic = DataLogic()
         for combo in comboList:
@@ -88,7 +99,7 @@ class Dataset(BaseClass):
             comboConfig['search'] = [{'field':combo['relateKey'], 'type':'in'}]
             comboConfig['size'] = ''
 
-            comboType = combo.get('dataType', 'default')
+            comboType = combo.get('dataType', 'list')
             comboData = {}
 
             if comboType == 'sql':
@@ -102,48 +113,46 @@ class Dataset(BaseClass):
                     query = query[0] + combo['dataset'] + ' where ' + combo['relateKey'] + ' in (' + values + ') ' + query[1]
                 searchParam['query'] = query
                 comboRes = daLogic.query(combo['dataset'], searchParam, user, comboConfig)
-                listObj = {}
-                comboData = comboRes['data']
-                for item in comboData:
-                    index = item[combo['relateKey']]
-                    if index not in listObj:
-                        listObj[index] = []
-                    listObj[index].append(item)
-                comboData = listObj
+                comboData = comboRes.get('data')
+
+                if not comboData:
+                    continue
             else:
                 comboRes = daLogic.get_list(combo['dataset'], searchParam, user, comboConfig)
-                comboData = comboRes['data']
+                comboData = comboRes.get('data')
 
-                if comboType == 'mix':
-                    listObj = {}
-                    for item in comboData:
-                        index = item[combo['relateKey']]
-                        if 'comboKeySuffix' not in combo:
-                            combo['comboKeySuffix'] = ""
-                        if index not in listObj:
-                            listObj[index] = {}
-                        listObj[index][item[combo['comboKey']]+combo['comboKeySuffix']] = item[combo['comboVal']]
-                    comboData = listObj
-                if comboType == 'list':
-                    listObj = {}
-                    for item in comboData:
-                        index = item[combo['relateKey']]
-                        if index not in listObj:
-                            listObj[index] = []
-                        listObj[index].append(item)
-                    comboData = listObj
+            if not comboData:
+                continue
+
+                # if comboType == 'mix':
+                #     listObj = {}
+                #     for item in comboData:
+                #         index = item[combo['relateKey']]
+                #         if 'comboKeySuffix' not in combo:
+                #             combo['comboKeySuffix'] = ""
+                #         if index not in listObj:
+                #             listObj[index] = {}
+                #         listObj[index][item[combo['comboKey']]+combo['comboKeySuffix']] = item[combo['comboVal']]
+                #     comboData = listObj
+            
+            listObj = comboData
+            if type(comboData) == list:
+                listObj = self._combo_proc_list(combo, comboData)
 
             for key, item in enumerate(resData):
                 fieldValue = item[combo['searchKey']]
                 if 'comboKey' in combo:
                     ckey = combo['comboKey']
-                    if comboData[fieldValue]:
-                        if comboType =='mix':
-                            resData[key] = dict(resData[key], **comboData[fieldValue])
-                        else:
-                            resData[key][ckey] = comboData[fieldValue]
-                elif comboData[fieldValue]:
-                    resData[key] = dict(resData[key], **comboData[fieldValue])
+                    if listObj.get(fieldValue):
+                        # if comboType =='mix':
+                        #     resData[key] = dict(resData[key], **listObj[fieldValue])
+                        # else:
+                        resData[key][ckey] = listObj[fieldValue]
+                    else:
+                        resData[key][ckey] = []
+
+                elif listObj.get(fieldValue):
+                    resData[key] = dict(resData[key], **listObj[fieldValue])
         
         return resData
 
@@ -152,12 +161,12 @@ class Dataset(BaseClass):
     
     def func_combo(self, request, funcName):
         param = self.get_param(request)
-        checked = self.check_required("token,dataset", param)
+        checked = self.check_required("_dtoken,dataset", param)
         if not checked:
             return ret(1, 'param error')
-        user = self.check_token(param.get("token"))
+        user = self.check_token(param.get("_dtoken"))
         if not user:
-            return ret(1, 'token error')
+            return ret(1, '_dtoken error')
         code = param.get("dataset")
         config = self.param_filter(param)
         is_empty = True
@@ -169,7 +178,21 @@ class Dataset(BaseClass):
                 break
         if is_empty:
             return ret(1)
+        
+        if funcName == 'func':
+            if code == 'workflow_dataset_query':
+                iddata = json.loads(param['data'])
+                dataset = iddata['dataset']
+                res = DataLogic().query(dataset, iddata, user)
+                return res
 
+            if code == 'workflow_dataset_incordsc':
+                iddata = json.loads(param['data'])
+                dataset = iddata['dataset']
+                idparam = iddata['param']
+                idconfig = iddata['conf']
+                res = DataLogic().incordsc(dataset, idparam, user, idconfig)
+                return res
         
         funcBody = getattr(DataLogic(), funcName)
         if funcBody:
@@ -190,6 +213,11 @@ class Dataset(BaseClass):
         resJson = json.dumps(resJson, cls=DatetimeEncoder)
 
         return resJson
+    
+    def func(self, request):
+        ret = self.func_combo(request, 'func')
+        return ret, {'Content-Type':'application/json'}
+    
 
     def add(self, request):
         ret = self.func_combo(request, 'add_data')

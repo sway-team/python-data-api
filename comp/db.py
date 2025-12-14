@@ -1,4 +1,5 @@
 from sqlalchemy import exc,create_engine, MetaData, Table, select,text,func,and_,inspect
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker,scoped_session,aliased
 from comp.tool import json_ret as ret,tprint
 from conf.workflow import workflowConfig
@@ -142,8 +143,6 @@ class Database:
             field = text(config['field'])
         else:
             field = text("*")
-
-        print('field:', table, where, field)
         
         table_keys = {}
 
@@ -158,9 +157,33 @@ class Database:
             sql, table_keys = self.join_handle(sql, table, joins, table_keys)
         # where 实现
         sql = self.convert_by_where(sql, table, where, config, table_keys)
-
         if 'group' in config:
-            sql = sql.group_by(table.c.get(config['group']))
+            # table.c.get(config['group'])
+            aGroup = config['group']
+
+            if aGroup in table.c:
+                sql = sql.group_by(table.c.get(aGroup))
+            else:
+                match = re.match(r'date_format\(([^,]+),\s*[\'"]([^\'"]+)[\'"]\)', aGroup)
+                if match:
+                    field_name = match.group(1).strip()
+                    date_format = match.group(2)
+                    
+                    # 获取字段对象
+                    if field_name in table.c:
+                        field_obj = table.c.get(field_name)
+                    else:
+                        # 处理带别名的字段
+                        real_field = field_name.split('.')[-1] if '.' in field_name else field_name
+                        if real_field in table.c:
+                            field_obj = table.c.get(real_field)
+                        else:
+                            # 如果找不到，使用原始字段名
+                            field_obj = field_name
+                    
+                    # 创建 date_format 表达式
+                    date_expr = func.date_format(field_obj, date_format)
+                    sql = sql.group_by(date_expr)
             type = ''
 
         if type == 'data':
@@ -173,6 +196,12 @@ class Database:
                         p = int(config.get('p', 1))
                         sql = sql.offset(size * (p - 1))
             # sql = sql.slice(size*(p-1), size*p)
+            
+            if 'offset' in config:
+                sql = sql.offset(int(config['offset']))
+            
+            if 'limit' in config:
+                sql = sql.limit(int(config['limit']))
             
             if 'order' in config:
                 order = config['order'].split(' ')
@@ -229,7 +258,7 @@ class Database:
                 filter.append(o_field.between(vals[0], vals[1]))
         elif c_type == 'in':
             # if ',' in val:
-            vals = val.split(',')
+            vals = str(val).split(',')
             filter.append(o_field.in_(vals))
         elif c_type == 'neq':
             if val == '$empty':
@@ -371,7 +400,7 @@ class Database:
                 return json
 
             sql = self.convert_by_config(table, where, config, 'data')
-            # print('sql', sql)
+            # print('info:sql', sql)
             result = self.exec(sql).mappings().fetchall()
         except Exception as e:
             print(e)
@@ -431,7 +460,7 @@ class Database:
         table = self.get_table(self.dbname)
 
         sql = self.convert_by_config(table, where, config, 'count')
-        # print('sql', sql)
+        # print('count:sql', sql, where)
         result = self.exec(sql).first()
 
         return result[0]
@@ -465,13 +494,22 @@ class Database:
         if config['type'] == 'add':
             sql = table.insert().values(**field)
         # elif config['type'] == 'update':
+        elif config['type'] == 'incordec':
+            where = self.check_params(config['where'], param, True)
+            incordec = config.get('incordec')
+            if incordec:
+                sql = table.update().filter_by(**where)
+                for key in incordec:
+                    if key not in table.c:
+                        continue
+                    sql = sql.values(**{key: table.c[key] + int(incordec[key])})
         else:
 
-            print(param, config)
+            # print(param, config)
             if 'updatefield' in config:
                 u_field = config['updatefield']
 
-            print(u_field, param)
+            # print(u_field, param)
             if u_field not in param or param[u_field] == "":
                 return ret(3)
             else:
@@ -486,16 +524,17 @@ class Database:
         # el
         # elif config['type'] == 'update':
         #     sql = table.update().filter_by(**where).values(**field)
-        # elif config['type'] == 'incordec':
-        #     if '+' in config:
-        #         sql = table.update().filter_by(**where).values(**{config['+'][0]: table.c[config['+'][0]] + config['+'][1]})
-        #     elif '-' in config:
-        #         sql = table.update().filter_by(**where).values(**{config['-'][0]: table.c[config['-'][0]] - config['-'][1]})
         # else:
             
         try:
             # print(sql)
             result = self.exec(sql)
+        except IntegrityError as e:
+            if hasattr(e, 'orig') and hasattr(e.orig, 'args') and len(e.orig.args) > 0:
+                error_code = e.orig.args[0]  # pymysql 的错误码在 orig.args[0]
+                if error_code == 1062:  # Duplicate entry
+                    return ret(12)
+            return ret(2, e.__str__())
         except Exception as e:
             print(e)
             return ret(2, e.__str__())
@@ -605,6 +644,12 @@ class Data:
         result = self.model.query(sql)
         # 将Row对象转换为字典
         return [{**row} for row in result]
+
+    def incordsc(self, where: dict, conf: dict={}):
+        conf = self.check_config(conf, 'update')
+        conf = {**conf, **{'type':'incordec'}}
+        ret = self.model.update(where, conf)
+        return ret    
     
     def check_config(self, conf: dict, type:str):
         if self.config != None and type in self.config:

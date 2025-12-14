@@ -6,15 +6,23 @@ import json,env,math
 from urllib.parse import quote_plus
 from cachetools import TTLCache
 
-class DataLogic:
 
-    _cache = TTLCache(maxsize=1000, ttl=300)
 
-    whiteSet = ['workflow_dataprop','workflow_tree','workflow_datain',\
+_cache_ttl = 300
+if env.ENV == 'dev':
+    _cache_ttl = 30
+
+_cache = TTLCache(maxsize=1000, ttl=_cache_ttl)
+whiteSet = ['workflow_dataprop','workflow_tree','workflow_datain',\
                     'workflow_dataset','workflow_datafilter','workflow_prototype',\
                         'workflow_instance','workflow_org','workflow_configbox','workflow_framebox','workflow_app','workflow_user']
 
-    
+
+class DataLogic:
+
+    def __init__(self):
+        self._cache = _cache
+        self.whiteSet = whiteSet
     # dataConfig = {'data':{'dataset':{
     #     'datatable':'dataset',
     #     'meta':{
@@ -44,6 +52,7 @@ class DataLogic:
         dataset = dataConfig['data']['dataset']
         inconfig = dataConfig['data']['inconfig']
         dataprop = dataConfig['data']['dataprop']
+        invalues = dataConfig['data']['invalues']
                 
         dbModel = Data(dataset['datatable'], schema=inconfig['db_name'], uri=inconfig['uri'])
         meta = dataset['meta']
@@ -59,8 +68,11 @@ class DataLogic:
 
             if not 'order' in config and 'db_order' in inconfig :
                 config['order'] = inconfig['db_order']
+
+            if 'order' in param:
+                config['order'] = param['order']
             
-            sqlConfig = self.checkSQLconfig(code, type, dataprop, config)
+            sqlConfig = self.checkSQLconfig(code, type, dataprop, config)           
 
             param = self.checkPropConfig(type, param, dataprop, config)
 
@@ -100,6 +112,18 @@ class DataLogic:
                 if sqlConfig['type'] != 'hard' and 'db_remove_type' in inconfig :
                     sqlConfig['type'] = inconfig['db_remove_type']
 
+            if invalues:
+                sqlConfigStr = json.dumps(sqlConfig)
+
+                # 遍历 $invalues 的item，得到field和value
+                # 如果 $sqlConfigStr 有 field 则替换为 value
+                for item in invalues:
+                    field = item['field']
+                    value = item['value']
+                    sqlConfigStr = sqlConfigStr.replace('{{'+field+'}}', value)
+                
+                sqlConfig = json.loads(sqlConfigStr)
+
             funcBody = getattr(dbModel, funcName)
 
             if funcBody:
@@ -120,7 +144,7 @@ class DataLogic:
                     except Exception as e:
                         print(e)
 
-            if funcName == 'get_one':
+            if funcName == 'get_one' or funcName == 'count':
                 return ret
 
             if type == 'index':
@@ -187,6 +211,9 @@ class DataLogic:
     def query(self, code, param, auth, config={}):
         ret = self.func_combo(code, param, auth, config, 'query', 'query')
         ret = json_ret(0, data=ret)
+        return ret
+    def incordsc(self, code, param, auth, config={}):
+        ret = self.func_combo(code, param, auth, config, 'incordsc', 'update')
         return ret
     
     def remove_data(self, code, param, auth, config={}):
@@ -279,6 +306,8 @@ class DataLogic:
             if not inconfig:
                 return json_ret(2)
             
+            invalues = inconfig.get('values', []);
+            
             local = 'dev'
 
             if env.ENV == 'prod':
@@ -290,7 +319,7 @@ class DataLogic:
 
             # if env.ENV == 'dev':
             #     inconfig['db_pwd'] = env.DB_PWD
-            inconfig['uri'] = 'mysql+pymysql://{db_user}:{db_pwd}@{db_host}:{db_port}/{db_name}?charset=utf8'.format(**inconfig)
+            inconfig['uri'] = 'mysql+pymysql://{db_user}:{db_pwd}@{db_host}:{db_port}/{db_name}?charset=utf8mb4'.format(**inconfig)
 
         propres = []
 
@@ -345,6 +374,7 @@ class DataLogic:
             'dataset':setres,
             'datain':inres,
             'inconfig':inconfig,
+            'invalues':invalues,
             'dataprop':propres
         }
         

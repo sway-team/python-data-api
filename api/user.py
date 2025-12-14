@@ -24,7 +24,7 @@ class Api(BaseClass):
 
     def post_dataset(self, path, param):
         token = self.token
-        param['token'] = token
+        param['_dtoken'] = token
         
         res = ret(1)
         dataset = param.get('dataset')
@@ -162,11 +162,16 @@ class Api(BaseClass):
                 'currentToken': param['currentToken']
             }
 
-        return self.post_dataset('update', {
+        res = self.post_dataset('update', {
             'dataset': 'workflow_user',
             'id': user['id'],
             'meta': json.dumps(meta)
         })
+
+        if res.get('code') == 0:
+            self.flushUserToken()
+
+        return res
 
 
     def addUpdateData(self, dataset, param, where):

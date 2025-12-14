@@ -1,4 +1,4 @@
-from flask import Flask,redirect,Response,abort
+from flask import Flask,redirect,Response,abort,send_from_directory
 from flask_cors import CORS
 import env,os
 from api.dataset import router as dataset_router
@@ -29,10 +29,20 @@ def hello_world():
     return {'result':'ok'}
 
 # 独立前端域名，可用跳转的方式
+# @app.route('/app/<path:subpath>')
+# def serve_app_catchall(subpath):
+#     return redirect(env.PAGE_HOST + '/app/' + subpath)
+
+STATIC_APP_DIR = os.path.join(os.path.dirname(__file__), 'static/app')
+
 @app.route('/app/<path:subpath>')
 def serve_app_catchall(subpath):
-    return redirect(env.PAGE_HOST + '/app/' + subpath)
-
+    file_path = os.path.join(STATIC_APP_DIR, subpath + '.html')
+    if os.path.isfile(file_path):
+        rep = send_from_directory(STATIC_APP_DIR, subpath + '.html')
+        return rep
+    else:
+        return abort(404)
 
 app.register_blueprint(dataset_router, url_prefix='/dataset')
 app.register_blueprint(user_router, url_prefix='/user')

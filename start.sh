@@ -27,7 +27,7 @@ start_app() {
     # 启动应用并加唯一标识参数
     (
      cd "$APP_PATH" &&
-     nohup gunicorn -w 2 -b 0.0.0.0:5070 app:app --log-level=debug --pid "$APP_PATH/app.pid" >> "$LOG_FILE" 2>&1 &
+     nohup gunicorn -w 2 -b 0.0.0.0:5069 app:app --log-level=debug --pid "$APP_PATH/app.pid" >> "$LOG_FILE" 2>&1 &
     )
 
     # 等待进程启动

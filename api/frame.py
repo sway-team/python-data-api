@@ -25,7 +25,7 @@ class Frame(BaseClass):
             filterItem = Data('datafilter').get_one({
                 'datasetcode':param['dataset'],
                 'code':param['filter'],
-                'createtoken':param['token']
+                'createtoken':param['_dtoken']
             })
             if not filterItem:
                 return config
@@ -38,14 +38,14 @@ class Frame(BaseClass):
             dconfig = json.loads(param['_dconfig'])
             config = dict(config, **dconfig)
         
-        unset(param, '_dconfig,filter,dataset,token')
+        unset(param, '_dconfig,filter,dataset,_dtoken')
 
         return config
     # 后续版本开发，先注释掉
     # def getframe(self, request):
     #     param = request.args
-    #     user = self.checkToken(param['token'])
-    #     cacheIndex = param['token'].'_'.$param['root'].'_'.$param['group']
+    #     user = self.checkToken(param['_dtoken'])
+    #     cacheIndex = param['_dtoken'].'_'.$param['root'].'_'.$param['group']
     #     cachePath = RUNTIME_PATH."Cache/Frame/"
     #     cacheFrame = F(cacheIndex, "", $cachePath); 
     #     if(!empty($cacheFrame) && time() - $cacheFrame['limitTime'] < $cacheFrame['cacheTime']){
@@ -60,12 +60,12 @@ class Frame(BaseClass):
     
     def getconfig(self, request):
         param = self.get_param(request)
-        checked = self.check_required("token,group", param)
+        checked = self.check_required("_dtoken,group", param)
         if not checked:
             return ret(1, 'param error')
-        user = self.check_token(param.get("token"))
+        user = self.check_token(param.get("_dtoken"))
         if not user:
-            return ret(1, 'token error')
+            return ret(1, '_dtoken error')
         
         param['createtoken'] = user['token']
 

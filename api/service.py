@@ -39,20 +39,20 @@ def go(path):
         if not checked:
             return ret(1)
         
-        if not param.get('token'):
+        if not param.get('_dtoken'):
             user = api.checkUserToken()
             if not user:
                 return ret(13)
                     
             if param.get('dataset') == 'workflow_app':
                 param['createtoken'] = user['token']
-                param['token'] = user['token']
+                param['_dtoken'] = user['token']
             elif user.get('currentToken'):
                 param['createtoken'] = user['currentToken']
-                param['token'] = user['currentToken']
+                param['_dtoken'] = user['currentToken']
             else:
                 param['createtoken'] = user['token']
-                param['token'] = user['token']
+                param['_dtoken'] = user['token']
 
         return Api().post_dataset(path, param)
     
@@ -86,7 +86,7 @@ class Api(BaseClass):
 
     def post_frame(self, path, param):
         token = env.ADMIN_TOKEN
-        param['token'] = token
+        param['_dtoken'] = token
         
         res = ret(1)
         
@@ -168,7 +168,8 @@ class Api(BaseClass):
 
         if 'code' in pageData and pageData['code'] != 0:
             return pageData
-
+        
+        pageData['user'] = user
         pageData = self.getPageConfig(path, param, pageData);
 
         if 'code' in pageData and pageData['code'] != 0:
@@ -271,9 +272,9 @@ class Api(BaseClass):
     
     def usercenter(self, param, pageData):
 
-        user = self.checkUserToken()
-        if not user:
-            return ret(13)
+        # user = self.checkUserToken()
+        # if not user:
+        #     return ret(13)
         
 
         topMenu = self._get_tree({'group':'usercenter'})
